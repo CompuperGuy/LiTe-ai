@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LiTe - Your Growing AI</title>
+  <style>
+    body {
+      background: #f4f4f7;
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    #chat {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .message {
+      max-width: 70%;
+      margin-bottom: 10px;
+      padding: 10px 15px;
+      border-radius: 15px;
+      font-size: 16px;
+      line-height: 1.4;
+      position: relative;
+    }
+    .user {
+      align-self: flex-end;
+      background: #007aff;
+      color: white;
+    }
+    .lite {
+      align-self: flex-start;
+      background: #e5e5ea;
+      color: black;
+    }
+    #input-area {
+      display: flex;
+      padding: 10px;
+      background: white;
+    }
+    #input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      font-size: 16px;
+    }
+    button {
+      margin-left: 10px;
+      padding: 10px 20px;
+      background: #007aff;
+      border: none;
+      border-radius: 20px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .heart {
+      cursor: pointer;
+      font-size: 18px;
+      margin-left: 10px;
+      color: grey;
+    }
+    .heart.liked {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+<div id="chat"></div>
+
+<div id="input-area">
+  <input id="input" placeholder="Talk to LiTe..." autofocus/>
+  <button onclick="send()">Send</button>
+</div>
+
+<script>
+let memory = JSON.parse(localStorage.getItem('lite-memory')) || {};
+let wordKnowledge = JSON.parse(localStorage.getItem('lite-words')) || {
+  hello: ["hi", "hey", "greetings"],
+  bye: ["goodbye", "see you", "later"],
+  good: ["great", "nice", "awesome"],
+  bad: ["terrible", "awful", "horrible"],
+};
+
+let trainingMode = false;
+
+function saveMemory() {
+  localStorage.setItem('lite-memory', JSON.stringify(memory));
+  localStorage.setItem('lite-words', JSON.stringify(wordKnowledge));
+}
+
+function similarity(a, b) {
+  a = a.toLowerCase();
+  b = b.toLowerCase();
+  if (a === b) return 1;
+  if (wordKnowledge[a] && wordKnowledge[a].includes(b)) return 0.8;
+  if (wordKnowledge[b] && wordKnowledge[b].includes(a)) return 0.8;
+  return 0;
+}
+
+function bestMatch(userInput) {
+  let best = {input: null, reply: "I'm still learning!", score: 0};
+  for (let past in memory) {
+    let score = similarity(userInput, past);
+    if (score > best.score) {
+      best = {input: past, reply: memory[past].reply, score: score};
+    }
+  }
+  return best.reply;
+}
+
+function send() {
+  const input = document.getElementById('input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  addMessage(text, 'user');
+
+  if (text === '0e9(dno!') {
+    trainingMode = !trainingMode;
+    addMessage(trainingMode ? "Training mode activated!" : "Training mode deactivated!", 'lite');
+    return;
+  }
+
+  thinking();
+
+  setTimeout(() => {
+    let reply;
+    if (trainingMode) {
+      reply = prompt("Training mode: What should LiTe reply?");
+      memory[text] = { reply: reply, likes: 0 };
+    } else {
+      reply = bestMatch(text);
+    }
+    addMessage(reply, 'lite', text);
+    memory[text] = memory[text] || { reply: reply, likes: 0 };
+    saveMemory();
+  }, 1000);
+}
+
+function addMessage(text, sender, userInput=null) {
+  const chat = document.getElementById('chat');
+  const message = document.createElement('div');
+  message.className = 'message ' + sender;
+  message.innerHTML = text;
+
+  if (sender === 'lite' && userInput) {
+    const heart = document.createElement('span');
+    heart.innerHTML = '❤️';
+    heart.className = 'heart';
+    heart.onclick = () => {
+      heart.classList.toggle('liked');
+      if (!memory[userInput]) memory[userInput] = { reply: text, likes: 0 };
+      memory[userInput].likes++;
+      saveMemory();
+      alert('Thanks for the feedback!');
+    };
+    message.appendChild(heart);
+  }
+
+  chat.appendChild(message);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function thinking() {
+  const chat = document.getElementById('chat');
+  const thinkingMsg = document.createElement('div');
+  thinkingMsg.className = 'message lite';
+  thinkingMsg.id = 'thinking';
+  thinkingMsg.innerHTML = 'LiTe is thinking...';
+  chat.appendChild(thinkingMsg);
+  chat.scrollTop = chat.scrollHeight;
+  setTimeout(() => {
+    const old = document.getElementById('thinking');
+    if (old) old.remove();
+  }, 900);
+}
+
+// Auto-save knowledge every 10 seconds
+setInterval(saveMemory, 10000);
+</script>
+
+</body>
+</html>
