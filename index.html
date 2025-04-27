@@ -2,279 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>LiTe - Your Growing AI</title>
-  <style>
-    body {
-      background: #1e1e2f;
-      font-family: 'Arial', sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      color: #fff;
-    }
-    #chat {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      background: #2b2b3c;
-    }
-    .message {
-      max-width: 70%;
-      margin-bottom: 10px;
-      padding: 12px 18px;
-      border-radius: 15px;
-      font-size: 16px;
-      line-height: 1.4;
-      position: relative;
-      word-wrap: break-word;
-    }
-    .user {
-      align-self: flex-end;
-      background: #007aff;
-      color: white;
-    }
-    .lite {
-      align-self: flex-start;
-      background: #3a3a4d;
-      color: white;
-    }
-    #input-area {
-      display: flex;
-      padding: 10px;
-      background: #1e1e2f;
-      border-top: 1px solid #333;
-    }
-    #input {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid #555;
-      border-radius: 20px;
-      font-size: 16px;
-      background: #2b2b3c;
-      color: white;
-    }
-    button {
-      margin-left: 10px;
-      padding: 10px 20px;
-      background: white;
-      border: none;
-      border-radius: 20px;
-      color: black;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .heart {
-      cursor: pointer;
-      font-size: 18px;
-      margin-left: 10px;
-      color: grey;
-    }
-    .heart.liked {
-      color: red;
-    }
-    .thinking-animation {
-      display: inline-block;
-      animation: float 0.8s infinite ease-in-out;
-    }
-    @keyframes float {
-      0% { transform: translateY(0px); }
-      50% { transform: translateY(-5px); }
-      100% { transform: translateY(0px); }
-    }
-    #sidebar {
-      width: 200px;
-      background: #111;
-      padding: 20px;
-      position: fixed;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    #sidebar h2 {
-      margin-top: 0;
-    }
-    #container {
-      margin-left: 200px;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-    #image-btn {
-      background: #444;
-      color: white;
-      border: none;
-      border-radius: 20px;
-      margin-left: 10px;
-      padding: 10px 20px;
-      cursor: pointer;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LiTe ai v1.1</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="js/boot.js" defer></script>
+  <script src="js/main.js" defer></script>
+  <script src="js/voice.js" defer></script>
+  <script src="js/network.js" defer></script>
+  <script src="js/trainer.js" defer></script>
 </head>
 <body>
-
-<div id="sidebar">
-  <h2>LiTe 🤖</h2>
-  <button id="image-btn" onclick="generateImage()">🎨 Generate Image</button>
-</div>
-
-<div id="container">
-  <div id="chat"></div>
-
-  <div id="input-area">
-    <input id="input" placeholder="Talk to LiTe..." autofocus/>
-    <button onclick="send()">Send</button>
+  <div id="boot-screen">
+    <h1 id="logo">LiTe ai v1.1</h1>
+    <div id="loading-bar-container">
+      <div id="loading-bar"></div>
+    </div>
   </div>
-</div>
-
-<script>
-let memory = JSON.parse(localStorage.getItem('lite-memory')) || {};
-let trainingMode = false;
-let forbiddenWords = ["badword1", "badword2", "swearword"]; // Blocked words
-let recognition, synth;
-
-if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-  recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-}
-if ('speechSynthesis' in window) {
-  synth = window.speechSynthesis;
-}
-
-let wordKnowledge = {
-  hello: ["hi", "hey", "greetings"],
-  bye: ["goodbye", "see you", "later"],
-  good: ["great", "nice", "awesome"],
-  bad: ["terrible", "awful", "horrible"],
-};
-
-function saveMemory() {
-  localStorage.setItem('lite-memory', JSON.stringify(memory));
-}
-
-function similarity(a, b) {
-  a = a.toLowerCase();
-  b = b.toLowerCase();
-  if (a === b) return 1;
-  if (wordKnowledge[a] && wordKnowledge[a].includes(b)) return 0.8;
-  if (wordKnowledge[b] && wordKnowledge[b].includes(a)) return 0.8;
-  return 0.2;
-}
-
-function bestMatch(userInput) {
-  let best = {input: null, reply: "I'm still learning!", score: 0};
-  for (let past in memory) {
-    let score = similarity(userInput, past);
-    if (score > best.score) {
-      best = {input: past, reply: memory[past].reply, score: score};
-    }
-  }
-  return best.reply;
-}
-
-function cleanOutput(text) {
-  forbiddenWords.forEach(word => {
-    const regex = new RegExp(word, "gi");
-    text = text.replace(regex, "🤐");
-  });
-  return text;
-}
-
-function send() {
-  const input = document.getElementById('input');
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-
-  addMessage(text, 'user');
-
-  if (text === '0e9(dno!') {
-    trainingMode = !trainingMode;
-    addMessage(trainingMode ? "🔧 Training Mode Activated!" : "Training Mode Deactivated!", 'lite');
-    return;
-  }
-
-  thinking();
-
-  setTimeout(() => {
-    let reply;
-    if (trainingMode) {
-      let thought = "Searching memory ➔ Matching words ➔ Building reply...";
-      addMessage(thought, 'lite');
-      reply = prompt("Training mode: What should LiTe reply?");
-      memory[text] = { reply: cleanOutput(reply), likes: 0 };
-    } else {
-      reply = cleanOutput(bestMatch(text));
-    }
-    addMessage(reply, 'lite', text);
-    speak(reply);
-    memory[text] = memory[text] || { reply: reply, likes: 0 };
-    saveMemory();
-  }, 1500);
-}
-
-function addMessage(text, sender, userInput=null) {
-  const chat = document.getElementById('chat');
-  const message = document.createElement('div');
-  message.className = 'message ' + sender;
-  message.innerHTML = text;
-
-  if (sender === 'lite' && userInput) {
-    const heart = document.createElement('span');
-    heart.innerHTML = '❤️';
-    heart.className = 'heart thinking-animation';
-    heart.onclick = () => {
-      heart.remove();
-      memory[userInput].likes++;
-      saveMemory();
-    };
-    message.appendChild(heart);
-  }
-
-  chat.appendChild(message);
-  chat.scrollTop = chat.scrollHeight;
-}
-
-function thinking() {
-  const chat = document.getElementById('chat');
-  const thinkingMsg = document.createElement('div');
-  thinkingMsg.className = 'message lite';
-  thinkingMsg.innerHTML = 'Thinking<span class="thinking-animation">...</span>';
-  chat.appendChild(thinkingMsg);
-  chat.scrollTop = chat.scrollHeight;
-  setTimeout(() => {
-    thinkingMsg.remove();
-  }, 1000);
-}
-
-function generateImage() {
-  const topics = ["a cute cat", "a futuristic city", "a beautiful sunset", "a smiling robot", "an enchanted forest"];
-  const topic = topics[Math.floor(Math.random() * topics.length)];
-  addMessage("🖼️ Generated image: " + topic, 'lite');
-}
-
-function speak(text) {
-  if (!synth) return;
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.voice = synth.getVoices().find(voice => voice.name.toLowerCase().includes("google")) || synth.getVoices()[0];
-  utter.pitch = 1.8;
-  utter.rate = 1;
-  synth.speak(utter);
-}
-
-document.getElementById('input').addEventListener('keypress', function (e) {
-  if (e.key === 'Enter') {
-    send();
-  }
-});
-
-</script>
-
+  
+  <div id="chat-screen" style="display:none;">
+    <div id="chat-box">
+      <div id="conversation"></div>
+      <textarea id="user-input" placeholder="Type your message..." rows="1"></textarea>
+      <button id="send-button" onclick="sendMessage()">Send</button>
+      <button id="image-toggle" onclick="toggleImageMode()">Switch to Image Mode</button>
+    </div>
+  </div>
 </body>
 </html>
+
