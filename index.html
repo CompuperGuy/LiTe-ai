@@ -3,32 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LiTe ai v1.1</title>
+  <title>LiTe AI</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script> <!-- TensorFlow.js -->
-  <script src="js/boot.js" defer></script>
-  <script src="js/main.js" defer></script>
-  <script src="js/voice.js" defer></script>
-  <script src="js/network.js" defer></script>
-  <script src="js/trainer.js" defer></script>
 </head>
-<body>
-  <div id="boot-screen">
-    <h1 id="logo">LiTe ai v1.1</h1>
-    <div id="loading-bar-container">
-      <div id="loading-bar"></div>
+<body class="dark-mode">
+  <header>
+    <h1 class="logo">LiTe AI v1.1</h1>
+  </header>
+
+  <div class="chat-container">
+    <div class="messages" id="messages"></div>
+    <div class="input-container">
+      <textarea id="userInput" placeholder="Type your message..."></textarea>
+      <button id="sendButton">Send</button>
     </div>
   </div>
-  
-  <div id="chat-screen" style="display:none;">
-    <div id="chat-box">
-      <div id="conversation"></div>
-      <textarea id="user-input" placeholder="Type your message..." rows="1"></textarea>
-      <button id="send-button" onclick="sendMessage()">Send</button>
-      <button id="image-toggle" onclick="toggleImageMode()">Switch to Image Mode</button>
-    </div>
-  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
 
- 
